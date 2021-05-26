@@ -1,26 +1,150 @@
 package exercise.android.reemh.todo_items;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
+import android.content.Context;
+import android.graphics.Paint;
 import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.CheckBox;
+import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.TextView;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
 
-  public TodoItemsDataBase dataBase = null;
+    public TodoItemsDataBase dataBase = null;
+    EditText editText ;
+    FloatingActionButton fb ;
+    RecyclerView recyclerView ;
+    ToDoItemAddapter itemAddapter ;
 
-  @Override
-  protected void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
-    setContentView(R.layout.activity_main);
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
 
-    if (dataBase == null) {
-      dataBase = new TodoItemsDataBaseImpl();
+        if (dataBase == null) {
+            dataBase = new TodoItemsDataBaseImpl();
+        }
+         editText = findViewById(R.id.editTextInsertTask);
+         fb = findViewById(R.id.buttonCreateTodoItem);
+         recyclerView = findViewById(R.id.recyclerTodoItemsList);
+         itemAddapter=new ToDoItemAddapter();
+        recyclerView.setAdapter(itemAddapter);
+
+        fb.setOnClickListener(v ->
+        {
+            if (!editText.getText().toString().equals("")) {
+                if(itemAddapter.get_items() !=null) {
+                dataBase.get(itemAddapter.get_items());}
+                dataBase.addNewInProgressItem(editText.getText().toString());
+                itemAddapter.set_items((ArrayList<TodoItem>) dataBase.getCurrentItems());
+                editText.setText("");
+            }
+
+        });
+
+        recyclerView.setLayoutManager(new LinearLayoutManager(this,RecyclerView.VERTICAL,false));
+        // TODO: implement the specs as defined below
+        //    (find all UI components, hook them up, connect everything you need)
+
     }
 
-    // TODO: implement the specs as defined below
-    //    (find all UI components, hook them up, connect everything you need)
-  }
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putSerializable("dataBase",dataBase.getCurrentItems());
+
+    }
+
+    @Override
+    protected void onRestoreInstanceState(@NonNull Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        itemAddapter.set_items((ArrayList<TodoItem>) savedInstanceState.getSerializable("dataBase"));
+
+    }
 }
+
+class ToDoItemHolder extends RecyclerView.ViewHolder {
+    TextView textView;
+    CheckBox checkBox;
+   ImageView trash  ;
+    public ToDoItemHolder(View view) {
+        super(view);
+        textView = view.findViewById(R.id.textView1);
+        checkBox = view.findViewById(R.id.checkBox2);
+        trash = view.findViewById(R.id.trash1);
+    }
+}
+
+class ToDoItemAddapter extends RecyclerView.Adapter<ToDoItemHolder> {
+    ArrayList<TodoItem> _items = new ArrayList<>();
+   TodoItemsDataBaseImpl a = new TodoItemsDataBaseImpl() ;
+
+    public void set_items(ArrayList<TodoItem> items) {
+        _items.clear();
+        _items.addAll(items);
+        notifyDataSetChanged();
+    }
+
+    @NonNull
+    @Override
+    public ToDoItemHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        Context context = parent.getContext();
+        View view = LayoutInflater.from(context)
+                .inflate(R.layout.row_todo_item, parent, false);
+        return new ToDoItemHolder(view);
+
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull ToDoItemHolder holder, int position) {
+
+        TodoItem item = _items.get(position);
+        holder.textView.setText(item.getItem());
+        holder.checkBox.setChecked(item.getDone());
+        holder.checkBox.setOnClickListener(v->{
+            if(holder.checkBox.isChecked())
+            {
+                _items.get(position).editDone();
+                a.get(_items);
+                set_items(a.getCurrentItems());
+                holder.textView.setPaintFlags(holder.textView.getPaintFlags()| Paint.STRIKE_THRU_TEXT_FLAG);
+                return;
+            }
+            _items.get(position).editDone();
+            a.get(_items);
+            set_items(a.getCurrentItems());
+            holder.textView.setPaintFlags(holder.textView.getPaintFlags()& (~Paint.STRIKE_THRU_TEXT_FLAG));
+
+        });
+        holder.trash.setOnClickListener(v->{
+           _items.remove(item);
+            a.get(_items);
+            this.set_items(a.getCurrentItems());
+
+        });
+
+
+    }
+    public ArrayList<TodoItem> get_items()
+    {
+        return _items ;
+    }
+    @Override
+    public int getItemCount() {
+        return _items.size();
+    }
+}
+
 
 /*
 

@@ -1,13 +1,15 @@
 package exercise.android.reemh.todo_items;
 
+import java.util.ArrayList;
 import java.util.List;
 
 
 // TODO: feel free to add/change/remove methods as you want
 public interface TodoItemsDataBase {
+  public void get(ArrayList<TodoItem> _items);
 
   /** Get a copy of the current items list */
-  List<TodoItem> getCurrentItems();
+  ArrayList<TodoItem> getCurrentItems();
 
   /**
    * Creates a new TodoItem and adds it to the list, with the @param description and status=IN-PROGRESS
